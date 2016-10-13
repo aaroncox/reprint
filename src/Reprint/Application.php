@@ -24,7 +24,7 @@ class Application extends SilexApplication
 
   public function __construct()
   {
-    $this->rootDir = __DIR__.'/../../';
+    $this->rootDir = APPLICATION_PATH . "/../";
     parent::__construct();
     // Setup the Reprint application
     $this->setConfiguration();
@@ -34,10 +34,10 @@ class Application extends SilexApplication
     if('development' == APPLICATION_ENV) {
       $this->debug = true;
       $this->register(new MonologServiceProvider(), array(
-          'monolog.logfile' => __DIR__.'/../var/logs/silex_dev.log',
+          'monolog.logfile' => $this->rootDir.'var/logs/silex_dev.log',
       ));
       $this->register(new WebProfilerServiceProvider(), array(
-          'profiler.cache_dir' => __DIR__.'/../var/cache/profiler',
+          'profiler.cache_dir' => $this->rootDir.'var/cache/profiler',
       ));
     }
   }
@@ -48,7 +48,7 @@ class Application extends SilexApplication
     $this->register(new DoctrineServiceProvider(), array(
       'db.options' => array(
         'driver'   => 'pdo_sqlite',
-        'path'     => __DIR__.'/app.db',
+        'path'     => $this->rootDir.'var/cache/app.db',
       ),
     ));
     // Initialize tables if needed
