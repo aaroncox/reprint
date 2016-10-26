@@ -3,8 +3,6 @@
 namespace Reprint\Steem;
 
 use Greymass\SteemPHP\RPC;
-use Greymass\SteemPHP\Data\Comment;
-
 
 class Client
 {
@@ -26,7 +24,7 @@ class Client
     return null;
   }
 
-  public function getContent() {
+  public function getContent($limit = 5, $skip = 0) {
     $accounts = $this->getConfig('accounts');
     $tags = $this->getConfig('tags');
     $content = array();
@@ -41,7 +39,10 @@ class Client
 
       // }
     }
+    // Sort the posts chronologically
     $content = $this->sortContent($content);
+    // Slice to get our desired amount
+    $content = array_slice($content, $skip, $limit);
     return $content;
   }
 
