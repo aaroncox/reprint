@@ -75,6 +75,11 @@ class Client
     }
   }
 
+  public function getPost($author, $permlink)
+  {
+    return $this->client->get_content($author, $permlink);
+  }
+
   public function getPosts($account, $tags = array(), $limit = 5, $skip = 0)
   {
     $posts = $this->getPostsFromAccount($account, $tags, $limit, $skip);
