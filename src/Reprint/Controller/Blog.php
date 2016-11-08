@@ -15,4 +15,11 @@ class Blog
       'post' => $app['steemd']->getPost($author, $permlink)
     ));
   }
+  public function listAction(Application $app, $category = null)
+  {
+    return $app['twig']->render('list.html.twig', array(
+      'category' => $category,
+      'posts' => $app['steemd']->getContentByTag($category)
+    ));
+  }
 }
