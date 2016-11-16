@@ -10,10 +10,9 @@ class Client
   protected $config;
   protected $client;
 
-  public function __construct($config, $db = null)
+  public function __construct($config, $filters)
   {
-    $this->config = $config;
-    $this->db = $db;
+    $this->config = array_merge($config, $filters);
     $this->client = new RPC($this->getConfig('host'));
   }
 
@@ -24,19 +23,22 @@ class Client
     return null;
   }
 
-  public function getContent($limit = 5, $skip = 0) {
-    $accounts = $this->getConfig('accounts');
-    $tags = $this->getConfig('tags');
+  public function getContent($query = array(), $limit = 5, $skip = 0) {
+    // Load default parameters if the query is empty
+    if(empty($query)) {
+      $query = array(
+        'accounts' => $this->getConfig('accounts'),
+        'tags' => $this->getConfig('tags'),
+        'title' => $this->getConfig('title'),
+      );
+    }
     $content = array();
-    foreach($accounts as $name => $data) {
+    foreach($query['accounts'] as $name => $data) {
       if(in_array('post', $data)) {
-        $content = array_merge($content, $this->getPosts($name, $tags, $limit, $skip));
+        $content = array_merge($content, $this->getPosts($name, $query, $limit, $skip));
       }
       // if(in_array('reblog', $data)) {
       //   $content = array_merge($content, $this->getReblogs($name, $tags));
-      // }
-      // if(in_array('vote', $data)) {
-
       // }
     }
     // Sort the posts chronologically
@@ -48,11 +50,11 @@ class Client
 
   public function getContentByTag($tag, $limit = 100, $skip = 0) {
     $accounts = $this->getConfig('accounts');
-    $tags = [$tag];
+    $query = array('tags' => array($tag));
     $content = array();
     foreach($accounts as $name => $data) {
       if(in_array('post', $data)) {
-        $content = array_merge($content, $this->getPosts($name, $tags, $limit, $skip));
+        $content = array_merge($content, $this->getPosts($name, $query, $limit, $skip));
       }
       // if(in_array('reblog', $data)) {
       //   $content = array_merge($content, $this->getReblogs($name, $tags));
@@ -79,32 +81,14 @@ class Client
     return $posts;
   }
 
-  private function cache($id, $content) {
-    $sql = "SELECT * FROM content WHERE id = ?";
-    $post = $this->db->fetchAssoc($sql, array($id));
-    if(!$post) {
-      $this->db->insert('content', array(
-        'id' => $id,
-        'time' => strtotime((string)$content['created']),
-        'json' => json_encode($content)
-      ));
-    } else {
-      $this->db->update('content', array(
-        'json' => json_encode($content)
-      ), array(
-        'id' => $id
-      ));
-    }
-  }
-
   public function getPost($author, $permlink)
   {
     return $this->client->get_content($author, $permlink);
   }
 
-  public function getPosts($account, $tags = array(), $limit = 5, $skip = 0)
+  public function getPosts($account, $query = array(), $limit = 5, $skip = 0)
   {
-    $posts = $this->getPostsFromAccount($account, $tags, $limit, $skip);
+    $posts = $this->getPostsFromAccount($account, $query);
     // Sort the posts chronologically
     $posts = $this->sortContent($posts);
     // Slice to get our desired amount
@@ -113,12 +97,21 @@ class Client
     return $posts;
   }
 
-  public function getPostsFromAccount($account, $tags, $limit, $skip)
+  public function getPostsFromAccount($account, $query)
   {
     $response = $this->client->get_posts($account);
     $return = [];
     foreach($response as $data) {
-      if(empty($tags) || in_array($data->category, $tags) || ($data->json_metadata && count(array_intersect($tags, $data->json_metadata['tags'])) > 0)) {
+      // Does this match our tag query?
+      $valid = true;
+      if(isset($query['tags']) && !empty($query['tags']) && $data->json_metadata && count(array_intersect(array_map('strtolower', $query['tags']), array_map('strtolower', $data->json_metadata['tags']))) == 0) {
+        $valid = false;
+      }
+      // Does this match our title query?
+      if(isset($query['title']) && strpos($data->title, $query['title']) === false) {
+        $valid = false;
+      }
+      if($valid) {
         $return[] = $data;
       }
     }
@@ -131,13 +124,9 @@ class Client
     $url = sprintf('https://steemdb.com/api/account/%s/contentreblog', $account);
     $json = json_decode(file_get_contents($url), true);
     $response = array();
-    // Local Storage
-    // $db = new Database('../var/cache/database/reblog');
     foreach($json as $reblog) {
       // Add the content to our response
-      // $response[] = $content = new Comment($reblog['content'][0]);
-      // Check to see if it exists in the local database
-      // $this->cache($content['_id'], $content);
+      $response[] = $content = new Comment($reblog['content'][0]);
     }
     return $response;
   }

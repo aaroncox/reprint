@@ -15,7 +15,7 @@ class Home
     $skip = $perPage * ($page - 1);
     return $app['twig']->render('index.html.twig', array(
       'page' => $page,
-      'posts' => $app['steemd']->getContent($perPage, $skip)
+      'posts' => $app['steemd']->getContent(null, $perPage, $skip)
     ));
   }
 }
