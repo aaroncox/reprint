@@ -42,32 +42,6 @@ class Application extends SilexApplication
     }
   }
 
- private function registerDatabase()
-  {
-    // Register our database connection - this should be configurable in yaml to use other data sources.
-    $this->register(new DoctrineServiceProvider(), array(
-      'db.options' => array(
-        'driver'   => 'pdo_sqlite',
-        'path'     => $this->rootDir.'var/cache/app.db',
-      ),
-    ));
-    // Initialize tables if needed
-    $schema = $this['db']->getSchemaManager();
-    if (!$schema->tablesExist('content')) {
-      $this->initDatabase($schema);
-    }
-  }
-
-  // This should use a yaml file or some other external format as opposed to being a method.
-  private function initDatabase($schema) {
-    $content = new Table('content');
-    $content->addColumn('id', 'text');
-    $content->setPrimaryKey(array('id'));
-    $content->addColumn('time', 'integer');
-    $content->addColumn('json', 'blob');
-    $schema->createTable($content);
-  }
-
   private function registerProviders()
   {
     $this->register(new ServiceControllerServiceProvider());
@@ -87,7 +61,6 @@ class Application extends SilexApplication
     $this->register(new Steem\Provider(), [
       'config' => $this['steem']
     ]);
-    $this->registerDatabase();
     $this->registerTwig();
   }
 
