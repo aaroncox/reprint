@@ -87,6 +87,7 @@ class Application extends SilexApplication
     $this['twig'] = $this->extend('twig', function ($twig, $app) {
       $twig->addGlobal('steem', $app['steem']);
       $twig->addGlobal('blog', $app['blog']);
+      $twig->addGlobal('display', new Helper\Display($app['blog']));
       return $twig;
     });
   }
