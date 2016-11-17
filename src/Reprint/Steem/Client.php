@@ -23,6 +23,10 @@ class Client
     return null;
   }
 
+  public function getAccount($accountName) {
+    return $this->client->get_account($accountName);
+  }
+
   public function getContent($query = array(), $limit = 5, $skip = 0) {
     // Load default parameters if the query is empty
     if(empty($query)) {
