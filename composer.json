@@ -24,7 +24,6 @@
         "symfony/twig-bridge": "~2.8|3.0.*",
         "symfony/validator": "~2.8|3.0.*",
         "symfony/yaml": "~2.8|3.0.*",
-        "doctrine/dbal": "~2.2",
         "marcojanssen/silex-routing-service-provider": "~2.0",
         "greymass/steemphp": "dev-master"
     },
