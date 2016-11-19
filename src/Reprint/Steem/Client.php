@@ -3,6 +3,7 @@
 namespace Reprint\Steem;
 
 use Greymass\SteemPHP\RPC;
+use Greymass\SteemPHP\Data\Comment;
 
 class Client
 {
@@ -41,9 +42,9 @@ class Client
       if(in_array('post', $data)) {
         $content = array_merge($content, $this->getPosts($name, $query, $limit, $skip));
       }
-      // if(in_array('reblog', $data)) {
-      //   $content = array_merge($content, $this->getReblogs($name, $tags));
-      // }
+      if(in_array('reblog', $data)) {
+        $content = array_merge($content, $this->getReblogs($name, $query, $limit, $skip));
+      }
     }
     // Sort the posts chronologically
     $content = $this->sortContent($content);
@@ -60,9 +61,9 @@ class Client
       if(in_array('post', $data)) {
         $content = array_merge($content, $this->getPosts($name, $query, $limit, $skip));
       }
-      // if(in_array('reblog', $data)) {
-      //   $content = array_merge($content, $this->getReblogs($name, $tags));
-      // }
+      if(in_array('reblog', $data)) {
+        $content = array_merge($content, $this->getReblogs($name, $query, $limit, $skip));
+      }
       // if(in_array('vote', $data)) {
 
       // }
@@ -106,31 +107,38 @@ class Client
     $response = $this->client->get_posts($account);
     $return = [];
     foreach($response as $data) {
-      // Does this match our tag query?
-      $valid = true;
-      if(isset($query['tags']) && !empty($query['tags']) && $data->json_metadata && count(array_intersect(array_map('strtolower', $query['tags']), array_map('strtolower', $data->json_metadata['tags']))) == 0) {
-        $valid = false;
-      }
-      // Does this match our title query?
-      if(isset($query['title']) && strpos($data->title, $query['title']) === false) {
-        $valid = false;
-      }
-      if($valid) {
+      if($this->matchesQuery($query, $data)) {
         $return[] = $data;
       }
     }
     return $return;
   }
 
-  public function getReblogs($account, $tags)
+  public function matchesQuery($query, $data) {
+    // Does this match our tag query?
+    $valid = true;
+    if(isset($query['tags']) && !empty($query['tags']) && $data->json_metadata && count(array_intersect(array_map('strtolower', $query['tags']), array_map('strtolower', $data->json_metadata['tags']))) == 0) {
+      $valid = false;
+    }
+    // Does this match our title query?
+    if(isset($query['title']) && strpos($data->title, $query['title']) === false) {
+      $valid = false;
+    }
+    return $valid;
+  }
+
+  public function getReblogs($account, $query, $limit, $skip)
   {
     // Temporary solution using steemdb until we get proper APIs
     $url = sprintf('https://steemdb.com/api/account/%s/contentreblog', $account);
     $json = json_decode(file_get_contents($url), true);
     $response = array();
     foreach($json as $reblog) {
-      // Add the content to our response
-      $response[] = $content = new Comment($reblog['content'][0]);
+      $content = new Comment($reblog['content'][0]);
+      if($this->matchesQuery($query, $content)) {
+        // Add the content to our response
+        $response[] = $content;
+      }
     }
     return $response;
   }
