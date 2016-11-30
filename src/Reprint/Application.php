@@ -32,7 +32,6 @@ class Application extends SilexApplication
     $this->registerRoutes();
     // Enable extras if the environment is set to 'development'
     if('development' == APPLICATION_ENV) {
-      $this->debug = true;
       $this->register(new MonologServiceProvider(), array(
           'monolog.logfile' => $this->rootDir.'var/logs/silex_dev.log',
       ));
