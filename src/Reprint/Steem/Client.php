@@ -28,7 +28,8 @@ class Client
     return $this->client->get_account($accountName);
   }
 
-  public function getContent($query = array(), $limit = 5, $skip = 0) {
+  public function getContent($query = array(), $perPage = 5, $page = 1) {
+    $skip = $perPage * ($page - 1);
     // Load default parameters if the query is empty
     if(empty($query)) {
       $query = array(
@@ -40,17 +41,25 @@ class Client
     $content = array();
     foreach($query['accounts'] as $name => $data) {
       if(in_array('post', $data)) {
-        $content = array_merge($content, $this->getPosts($name, $query, $limit, $skip));
+        $content = array_merge($content, $this->getPosts($name, $query));
       }
       if(in_array('reblog', $data)) {
-        $content = array_merge($content, $this->getReblogs($name, $query, $limit, $skip));
+        $content = array_merge($content, $this->getReblogs($name, $query));
       }
     }
+    // Determine total count
+    $total = count($content);
     // Sort the posts chronologically
     $content = $this->sortContent($content);
     // Slice to get our desired amount
-    $content = array_slice($content, 0, $limit);
-    return $content;
+    $content = array_slice($content, $skip, $perPage);
+    return array(
+      'content' => $content,
+      'page' => $page,
+      'pages' => (int) ceil($total / $perPage),
+      'perPage' => $perPage,
+      'total' => $total
+    );
   }
 
   public function getContentByTag($tag, $limit = 100, $skip = 0) {
@@ -91,13 +100,11 @@ class Client
     return $this->client->get_content($author, $permlink);
   }
 
-  public function getPosts($account, $query = array(), $limit = 5, $skip = 0)
+  public function getPosts($account, $query = array())
   {
     $posts = $this->getPostsFromAccount($account, $query);
     // Sort the posts chronologically
     $posts = $this->sortContent($posts);
-    // Slice to get our desired amount
-    $posts = array_slice($posts, $skip, $limit);
     // Return our posts
     return $posts;
   }
@@ -127,7 +134,7 @@ class Client
     return $valid;
   }
 
-  public function getReblogs($account, $query, $limit, $skip)
+  public function getReblogs($account, $query)
   {
     // Temporary solution using steemdb until we get proper APIs
     $url = sprintf('https://steemdb.com/api/account/%s/contentreblog', $account);
