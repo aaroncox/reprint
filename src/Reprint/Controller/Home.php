@@ -12,10 +12,13 @@ class Home
   {
     $page = $request->query->get('page', 1);
     $perPage = 5;
-    $skip = $perPage * ($page - 1);
+    $response = $app['steemd']->getContent(null, $perPage, $page);
     return $app['twig']->render('index.html.twig', array(
-      'page' => $page,
-      'posts' => $app['steemd']->getContent(null, $perPage, $skip)
+      'page' => $response['page'],
+      'pages' => $response['pages'],
+      'total' => $response['total'],
+      'perPage' => $response['perPage'],
+      'posts' => $response['content'],
     ));
   }
 }
