@@ -51,9 +51,12 @@ class Client
     $total = count($content);
     // Sort the posts chronologically
     $content = $this->sortContent($content);
+    // Store the full results
+    $results = $content;
     // Slice to get our desired amount
     $content = array_slice($content, $skip, $perPage);
     return array(
+      'results' => $results,
       'content' => $content,
       'page' => $page,
       'pages' => (int) ceil($total / $perPage),
