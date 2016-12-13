@@ -49,6 +49,8 @@ class Client
     }
     // Determine total count
     $total = count($content);
+    // Determine all categories
+    $categories = $this->getTagsFromPosts($content);
     // Sort the posts chronologically
     $content = $this->sortContent($content);
     // Store the full results
@@ -56,13 +58,29 @@ class Client
     // Slice to get our desired amount
     $content = array_slice($content, $skip, $perPage);
     return array(
-      'results' => $results,
+      'categories' => $categories,
       'content' => $content,
       'page' => $page,
       'pages' => (int) ceil($total / $perPage),
       'perPage' => $perPage,
-      'total' => $total
+      'results' => $results,
+      'total' => $total,
     );
+  }
+
+  public function getTagsFromPosts($posts) {
+    $response = array();
+    foreach($posts as $post) {
+      foreach($post->getTags() as $tag) {
+        if(isset($response[$tag])) {
+          $response[$tag]++;
+        } else {
+          $response[$tag] = 1;
+        }
+      }
+    }
+    arsort($response);
+    return $response;
   }
 
   public function getContentByTag($tag, $limit = 100, $skip = 0) {
