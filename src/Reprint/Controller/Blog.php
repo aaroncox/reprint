@@ -15,11 +15,24 @@ class Blog
       'post' => $app['steemd']->getPost($author, $permlink)
     ));
   }
-  public function listAction(Application $app, $category = null)
+  public function listAction(Application $app, $category = null, Request $request)
   {
+    $page = $request->query->get('page', 1);
+    $perPage = 5;
+    $query = array(
+      'accounts' => $app['blog']['filters']['accounts'],
+      'tags' => [$category]
+    );
+    $response = $app['steemd']->getContent($query, $perPage, $page);
     return $app['twig']->render('list.html.twig', array(
+      'page' => $response['page'],
+      'pages' => $response['pages'],
+      'total' => $response['total'],
+      'perPage' => $response['perPage'],
+      'posts' => $response['content'],
+      'recent' => array_slice($response['results'], 0, 5),
       'category' => $category,
-      'posts' => $app['steemd']->getContentByTag($category)
+      'categories' => $response['categories'],
     ));
   }
 }
