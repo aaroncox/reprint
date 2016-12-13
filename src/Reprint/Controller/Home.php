@@ -19,6 +19,7 @@ class Home
       'total' => $response['total'],
       'perPage' => $response['perPage'],
       'posts' => $response['content'],
+      'recent' => array_slice($response['results'], 0, 5),
     ));
   }
 }
